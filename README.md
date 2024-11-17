@@ -26,8 +26,10 @@ In my V1, I made it replace the entire menu bar, but quickly realized that it me
 ## WIP Features & Bugs
 - Close activity monitor too when you press it again
 - Cosmetics: rolling is jank sometimes
+- Ricebar only shows up on main page instead of always and toggle show/hide only works when application is selected.
 
 ## Planned features
+- App logo
 - Weather -_-
 - Allow users to customize their ricebar color palatte and hide certain icons.
 - Execute ad-hoc bash scripts you decide to write :D
