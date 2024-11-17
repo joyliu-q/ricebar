@@ -1,31 +1,48 @@
 //
-//  ricebarApp.swift
-//  ricebar
+//  RicebarApp.swift
+//  Ricebar
 //
 //  Created by Joy Liu on 11/3/24.
 //
 
 import SwiftUI
 
-/// https://danielsaidi.com/blog/2023/11/22/customizing-the-macos-menu-bar-in-swiftui
-/// https://github.com/siteline/swiftui-introspect
 @main
-struct 🍚: App {
+struct RicebarApp: App {
     @State private var showRicebar = false
 
     var body: some Scene {
-        WindowGroup {
-            ContentView(showRicebar: $showRicebar)
+        MenuBarExtra {
+            // The content inside the Menu Bar Extra
+            Button(action: {
+                showRicebar.toggle()
+            }) {
+                Text(showRicebar ? "Hide Ricebar" : "Show Ricebar")
+            }
+        } label: {
+            // The icon shown in the menu bar
+            Image(systemName: "leaf.fill")
         }
+        .menuBarExtraStyle(.window) // Optional: Choose the style of the menu bar extra
+
+        // Add keyboard shortcut
         .commands {
             CommandMenu("Ricebar") {
                 Button(action: {
                     showRicebar.toggle()
                 }) {
-                    Text(showRicebar ? "Hide" : "Show")
+                    Text(showRicebar ? "Hide Ricebar" : "Show Ricebar")
                 }
                 .keyboardShortcut("P", modifiers: [.command, .shift])
             }
         }
+        .onChange(of: showRicebar, {
+            if showRicebar {
+                PopoverManager.shared.showPopover()
+            } else {
+                PopoverManager.shared.hidePopover()
+            }
+        })
     }
 }
+

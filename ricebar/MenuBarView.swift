@@ -7,14 +7,8 @@
 import SwiftUI
 import IOKit.ps
 import IOKit
-//  MenuBarView.swift
-//  ricebar
-//
-//  Created by Joy Liu on 11/9/24.
-//
-import SwiftUI
-import IOKit.ps
-import IOKit
+import Network
+
 
 struct MenuBarView: View {
     let onDismiss: () -> Void
@@ -22,12 +16,14 @@ struct MenuBarView: View {
     @State private var batteryPercentage = SystemInfoProvider.getBatteryPercentage()
     @State private var cpuUtilization = SystemInfoProvider.getCPUUtilization()
     @State private var isCharging = SystemInfoProvider.isCharging()
+    @State private var wifiDropdownExpanded = false
+    @State private var ipAddress = SystemInfoProvider.getIPAddress() ?? "Unavailable"
 
     var body: some View {
         VStack {
             HStack(spacing: 20) {
                 ZStack(alignment: .topTrailing) {
-                    SystemInfoButton(iconName: SystemInfoProvider.getBatteryIcon(for: batteryPercentage), label: "\(batteryPercentage)%")
+                SystemInfoButton(iconName: SystemInfoProvider.getBatteryIcon(for: batteryPercentage), label: "\(batteryPercentage)%")
                     
                     if isCharging {
                         Image(systemName: "bolt.fill")
@@ -42,6 +38,36 @@ struct MenuBarView: View {
                 ActionButton(iconName: "rectangle.stack") {
                     SystemActions.openActivityMonitor()
                 }
+                
+                DropdownButton(iconName: "wifi") {
+                    VStack(alignment: .leading) {
+                        Text("Wi-Fi Details")
+                            .font(.headline)
+                            .foregroundColor(.defaultAccent)
+                        Divider()
+                        HStack {
+                            Text("IP Address:")
+                                .foregroundColor(.defaultAccent)
+                            Spacer()
+                            Text(ipAddress)
+                                .foregroundColor(.defaultAccent)
+                        }
+                        Button("Copy IP Address") {
+                            let pasteboard = NSPasteboard.general
+                            pasteboard.clearContents()
+                            let success = pasteboard.setString(ipAddress, forType: .string)
+                            if !success {
+                                print("Failed to copy IP address to the clipboard")
+                            }
+                        }
+                        .padding(.top, 4)
+                        .buttonStyle(PlainButtonStyle())
+                        .foregroundColor(.defaultAccent)
+                        .background(DEFAULT_BACKGROUND.timeVaryingShader())
+
+                    }
+                }
+
 
                 ActionButton(iconName: "bell") {
                     showAlert = true
@@ -56,9 +82,9 @@ struct MenuBarView: View {
                 }
                 .foregroundColor(.white)
             }
-            .padding()
-            .frame(maxWidth: .infinity, maxHeight: 40)
-            .background(DEFAULT_BACKGROUND)
+            .padding(EdgeInsets(top: 4, leading: 12, bottom:4, trailing: 12))
+            .frame(maxWidth: .infinity)
+            .background(DEFAULT_BACKGROUND.timeVaryingShader())
             .cornerRadius(16)
             .shadow(radius: 10)
             .onAppear {
@@ -67,10 +93,47 @@ struct MenuBarView: View {
                 isCharging = SystemInfoProvider.isCharging()
             }
         }.padding(5)
+        .background(.clear)
     }
 }
 
 struct SystemInfoProvider {
+    static func copyToClipboard(_ text: String) {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(text, forType: .string)
+        }
+    
+    static func getIPAddress() -> String? {
+            var address: String?
+            var ifaddr: UnsafeMutablePointer<ifaddrs>?
+            guard getifaddrs(&ifaddr) == 0 else { return nil }
+            guard let firstAddr = ifaddr else { return nil }
+
+            for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+                let interface = ptr.pointee
+                let addrFamily = interface.ifa_addr.pointee.sa_family
+                if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
+                    let name = String(cString: interface.ifa_name)
+                    if name == "en0", let addr = interface.ifa_addr {
+                        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                        getnameinfo(
+                            addr,
+                            socklen_t(addr.pointee.sa_len),
+                            &hostname,
+                            socklen_t(hostname.count),
+                            nil,
+                            0,
+                            NI_NUMERICHOST
+                        )
+                        address = String(cString: hostname)
+                    }
+                }
+            }
+            freeifaddrs(ifaddr)
+            return address
+        }
+    
     static func getBatteryPercentage() -> Int {
         guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
               let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef],
