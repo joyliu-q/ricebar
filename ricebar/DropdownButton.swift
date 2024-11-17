@@ -19,12 +19,12 @@ struct DropdownButton<Content: View>: View {
     let iconName: String
     let title: String
     @State private var isPresented: Bool = false
-    @State private var content: Content
+    let content: () -> Content
 
-    init(iconName: String, title: String = "Menu", @ViewBuilder content: () -> Content) {
+    init(iconName: String, title: String = "Menu", @ViewBuilder content: @escaping () -> Content) {
         self.iconName = iconName
-        self.content = content()
         self.title = title
+        self.content = content
     }
 
     var body: some View {
@@ -40,22 +40,22 @@ struct DropdownButton<Content: View>: View {
             isPresented: $isPresented,
             attachmentAnchor: .rect(.bounds)
         ) {
-            DropdownMenu(isPresented: $isPresented, title: title) {content}
-        }.background(.clear)
+            DropdownMenu(isPresented: $isPresented, title: title, content: content)
+        }
+        .background(.clear)
     }
 }
 
-
 struct DropdownMenu<Content: View>: View {
     @Binding var isPresented: Bool
-    let content: Content
     let title: String
+    let content: () -> Content
 
-    init(isPresented: Binding<Bool>, title: String = "Menu", @ViewBuilder content: () -> Content) {
-            self._isPresented = isPresented
-            self.title = title
-            self.content = content()
-        }
+    init(isPresented: Binding<Bool>, title: String = "Menu", @ViewBuilder content: @escaping () -> Content) {
+        self._isPresented = isPresented
+        self.title = title
+        self.content = content
+    }
 
     var body: some View {
         ZStack {
@@ -70,7 +70,7 @@ struct DropdownMenu<Content: View>: View {
                 .padding([.horizontal, .top])
                 Divider()
                     .background(.defaultAccent)
-                content
+                content() 
                     .padding([.horizontal, .bottom])
             }
             .frame(maxWidth: 200)
@@ -78,21 +78,4 @@ struct DropdownMenu<Content: View>: View {
             .animation(.spring(), value: isPresented)
         }
     }
-}
-
-#Preview {
-    DropdownMenu(isPresented: .constant(true)) {
-               VStack {
-                   Text("Option 1")
-                       .onTapGesture { print("Option 1 selected") }
-                       .foregroundColor(.defaultAccent)
-                   Text("Option 2")
-                       .onTapGesture { print("Option 2 selected") }
-                       .foregroundColor(.defaultAccent)
-                   Text("Option 3")
-                       .onTapGesture { print("Option 3 selected") }
-                       .foregroundColor(.defaultAccent)
-               }
-           }
-           .background(DEFAULT_BACKGROUND)
 }
