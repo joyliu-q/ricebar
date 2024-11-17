@@ -17,12 +17,14 @@ struct DropdownOption {
 
 struct DropdownButton<Content: View>: View {
     let iconName: String
+    let title: String
     @State private var isPresented: Bool = false
     @State private var content: Content
 
-    init(iconName: String, @ViewBuilder content: () -> Content) {
+    init(iconName: String, title: String = "Menu", @ViewBuilder content: () -> Content) {
         self.iconName = iconName
         self.content = content()
+        self.title = title
     }
 
     var body: some View {
@@ -38,7 +40,7 @@ struct DropdownButton<Content: View>: View {
             isPresented: $isPresented,
             attachmentAnchor: .rect(.bounds)
         ) {
-            DropdownMenu(isPresented: $isPresented) {content}
+            DropdownMenu(isPresented: $isPresented, title: title) {content}
         }.background(.clear)
     }
 }
@@ -57,22 +59,13 @@ struct DropdownMenu<Content: View>: View {
 
     var body: some View {
         ZStack {
-            DEFAULT_BACKGROUND.edgesIgnoringSafeArea(.all)
+            DEFAULT_BACKGROUND.edgesIgnoringSafeArea(.all).timeVaryingShader()
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text(title)
                         .font(.headline)
                         .foregroundColor(.defaultAccent)
                     Spacer()
-                    Button(action: { isPresented = false }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .foregroundColor(.defaultAccent)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
                 }
                 .padding([.horizontal, .top])
                 Divider()

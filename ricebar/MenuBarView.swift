@@ -9,6 +9,28 @@ import IOKit.ps
 import IOKit
 import Network
 
+struct WifiData {
+    var ipv4: String = "Unavailable"
+    var ipv6: String = "Unavailable"
+}
+
+struct ConditionalModifier<TrueModifier: ViewModifier>: ViewModifier {
+    let condition: Bool
+    let trueModifier: TrueModifier
+
+    init(condition: Bool, trueModifier: TrueModifier) {
+        self.condition = condition
+        self.trueModifier = trueModifier
+    }
+
+    func body(content: Content) -> some View {
+        if condition {
+            content.modifier(trueModifier)
+        } else {
+            content
+        }
+    }
+}
 
 struct MenuBarView: View {
     let onDismiss: () -> Void
@@ -17,54 +39,88 @@ struct MenuBarView: View {
     @State private var cpuUtilization = SystemInfoProvider.getCPUUtilization()
     @State private var isCharging = SystemInfoProvider.isCharging()
     @State private var wifiDropdownExpanded = false
-    @State private var ipAddress = SystemInfoProvider.getIPAddress() ?? "Unavailable"
+    @State private var wifiData = SystemInfoProvider.getWifiData()
 
     var body: some View {
         VStack {
             HStack(spacing: 20) {
                 ZStack(alignment: .topTrailing) {
-                SystemInfoButton(iconName: SystemInfoProvider.getBatteryIcon(for: batteryPercentage), label: "\(batteryPercentage)%")
+                Button(action: {}) {
+                    HStack {
+                        ZStack {
+                            Image(systemName: SystemInfoProvider.getBatteryIcon(for: batteryPercentage))
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                                .foregroundColor(.white)
+                            
+                            if (isCharging) {
+                                Image(systemName: "bolt.fill")
+                                    .foregroundColor(.blue)
+                                    .offset(x: -2)
+                            }
+                        }
+                        
+                    }.modifier(
+                        ConditionalModifier(
+                            condition: isCharging,
+                            trueModifier: TimeVaryingShader()
+                        )
+                    )
                     
-                    if isCharging {
-                        Image(systemName: "bolt.fill")
-                            .foregroundColor(.yellow)
-                            .offset(x: -5, y: -5)
+                        Text("\(batteryPercentage)%")
+                            .foregroundColor(.white)
                     }
                 }
+                .buttonStyle(PlainButtonStyle())
+                
                 
                 SystemInfoButton(iconName: nil, label: SystemInfoProvider.getCurrentTime())
                 SystemInfoButton(iconName: SystemInfoProvider.getCPUIcon(for: cpuUtilization), label: "\(cpuUtilization)%")
 
-                ActionButton(iconName: "rectangle.stack") {
+                ActionButton(iconName: "book.and.wrench") {
                     SystemActions.openActivityMonitor()
                 }
                 
-                DropdownButton(iconName: "wifi") {
-                    VStack(alignment: .leading) {
-                        Text("Wi-Fi Details")
-                            .font(.headline)
-                            .foregroundColor(.defaultAccent)
-                        Divider()
-                        HStack {
-                            Text("IP Address:")
-                                .foregroundColor(.defaultAccent)
-                            Spacer()
-                            Text(ipAddress)
-                                .foregroundColor(.defaultAccent)
-                        }
-                        Button("Copy IP Address") {
+                DropdownButton(iconName: "wifi", title: "Wi-Fi") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Button(action: {
                             let pasteboard = NSPasteboard.general
                             pasteboard.clearContents()
-                            let success = pasteboard.setString(ipAddress, forType: .string)
+                            let success = pasteboard.setString(wifiData.ipv4, forType: .string)
                             if !success {
-                                print("Failed to copy IP address to the clipboard")
+                                print("Failed to copy IPv4 address to the clipboard")
+                            }
+                        }) {
+                            HStack {
+                                Text("IPv4:")
+                                Spacer()
+                                Text(wifiData.ipv4)
                             }
                         }
-                        .padding(.top, 4)
-                        .buttonStyle(PlainButtonStyle())
-                        .foregroundColor(.defaultAccent)
-                        .background(DEFAULT_BACKGROUND.timeVaryingShader())
-
+                        .buttonStyle(.borderless)
+                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity)
+                        
+                        Divider()
+                        
+                        Button(action: {
+                            let pasteboard = NSPasteboard.general
+                            pasteboard.clearContents()
+                            let success = pasteboard.setString(wifiData.ipv6, forType: .string)
+                            if !success {
+                                print("Failed to copy IPv6 address to the clipboard")
+                            }
+                        }) {
+                            HStack {
+                                Text("IPv6:")
+                                Spacer()
+                                Text(wifiData.ipv6)
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                        .padding(.horizontal)
+                        .frame(maxWidth: .infinity)
                     }
                 }
 
@@ -77,7 +133,7 @@ struct MenuBarView: View {
                 }
 
                 Spacer()
-                Button("Dismiss") {
+                ActionButton(iconName: "chevron.forward.dotted.chevron.forward") {
                     onDismiss()
                 }
                 .foregroundColor(.white)
@@ -104,34 +160,39 @@ struct SystemInfoProvider {
             pasteboard.setString(text, forType: .string)
         }
     
-    static func getIPAddress() -> String? {
-            var address: String?
-            var ifaddr: UnsafeMutablePointer<ifaddrs>?
-            guard getifaddrs(&ifaddr) == 0 else { return nil }
-            guard let firstAddr = ifaddr else { return nil }
+    static func getWifiData() -> WifiData {
+        var wifiData = WifiData()
+        var ifaddr: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddr) == 0 else { return wifiData }
+            guard let firstAddr = ifaddr else { return wifiData }
 
-            for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
-                let interface = ptr.pointee
-                let addrFamily = interface.ifa_addr.pointee.sa_family
-                if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
-                    let name = String(cString: interface.ifa_name)
-                    if name == "en0", let addr = interface.ifa_addr {
-                        var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                        getnameinfo(
-                            addr,
-                            socklen_t(addr.pointee.sa_len),
-                            &hostname,
-                            socklen_t(hostname.count),
-                            nil,
-                            0,
-                            NI_NUMERICHOST
-                        )
-                        address = String(cString: hostname)
+        for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+            let interface = ptr.pointee
+            let addrFamily = interface.ifa_addr.pointee.sa_family
+            if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
+                let name = String(cString: interface.ifa_name)
+                if name == "en0", let addr = interface.ifa_addr {
+                    var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                    getnameinfo(
+                        addr,
+                        socklen_t(addr.pointee.sa_len),
+                        &hostname,
+                        socklen_t(hostname.count),
+                        nil,
+                        0,
+                        NI_NUMERICHOST
+                    )
+                    if addrFamily == UInt8(AF_INET) {
+                    wifiData.ipv4 = String(cString: hostname)
+                    } else {
+                        wifiData.ipv6 = String(cString: hostname)
                     }
+                   
                 }
             }
-            freeifaddrs(ifaddr)
-            return address
+        }
+        freeifaddrs(ifaddr)
+        return wifiData
         }
     
     static func getBatteryPercentage() -> Int {
@@ -218,7 +279,7 @@ struct SystemInfoProvider {
 
 struct SystemActions {
     static func openActivityMonitor() {
-        let path = "/Applications/Utilities/Activity Monitor.app"
+        let path = "/System/Applications/Utilities/Activity Monitor.app"
         NSWorkspace.shared.open(URL(fileURLWithPath: path))
     }
 }

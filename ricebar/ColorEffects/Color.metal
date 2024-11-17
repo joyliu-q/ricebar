@@ -33,13 +33,26 @@ half4 timeVaryingColor_old(float2 position, half4 color, float2 size, float time
 
 [[ stitchable ]]
 half4 timeVaryingColor(float2 position, half4 color, float2 size, float time) {
-    half greenOscillation = oscillate(time + (2 * M_PI_F * position.x / size.x));
+    half oscillation = oscillate(time + (2 * M_PI_F * position.x / size.x));
     
     return half4(
-        color.r * greenOscillation * 1.5,
-        color.g * greenOscillation * 2,
-        color.b * greenOscillation * 3,
+        color.r * oscillation * 1.5,
+        color.g * oscillation * 2,
+        color.b * oscillation * 3,
         color.a
     );
 }
 
+
+
+[[ stitchable ]]
+half4 timeVaryingColorLight(float2 position, half4 color, float2 size, float time) {
+    half oscillation = oscillate(time + (4 * M_PI_F * position.x / size.x));
+    
+    return half4(
+        color.r * oscillation * 3,
+        color.g * oscillation * 2,
+        color.b * oscillation * 4,
+        color.a
+    );
+}
