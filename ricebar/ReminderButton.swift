@@ -21,16 +21,16 @@ struct ReminderButton: View {
             DropdownButton(iconName: "bell", title: "Set Reminder") {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        Text("Remind me in:")
-                        Picker(selection: $selectedMinutes, label: Text("Minutes")) {
+                        Picker(selection: $selectedMinutes, label: Text("")) {
                             ForEach(reminderOptions, id: \.self) { option in
-                                Text("\(option) min").tag(option)
+                                Text("\(option)").foregroundStyle(.defaultAccent).tag(option)
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
+                        Text("Minutes").foregroundStyle(.defaultAccent)
                     }
                     TextField("Optional message", text: $customMessage)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textFieldStyle(RoundedBorderTextFieldStyle()).foregroundStyle(.defaultAccent)
                     
                     Button(action: requestNotificationPermission) {
                         HStack {

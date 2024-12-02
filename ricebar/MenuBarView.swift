@@ -8,7 +8,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     let onDismiss: () -> Void
-    @State private var showAlert = false
+    @State private var showPing = false
     @State private var batteryPercentage = SystemInfoProvider.getBatteryPercentage()
     @State private var cpuUtilization = SystemInfoProvider.getCPUUtilization()
     @State private var isCharging = SystemInfoProvider.isCharging()
@@ -100,12 +100,14 @@ struct MenuBarView: View {
                 
                 ReminderButton()
 
-//                ActionButton(iconName: "bell") {
-//                    showAlert = true
-//                }
-//                .alert(isPresented: $showAlert) {
-//                    Alert(title: Text("Hi"), message: Text("This is a simple alert!"), dismissButton: .default(Text("OK")))
-//                }
+               ActionButton(iconName: "sparkles") {
+                   showPing = true
+               }
+               .alert(isPresented: $showPing) {
+                   Alert(title: Text("Ping"), message: Text("Pong"), dismissButton: .default(Text("OK")))
+               }
+
+                SettingsButton()
 
                 Spacer()
                 ActionButton(iconName: "chevron.forward.dotted.chevron.forward") {

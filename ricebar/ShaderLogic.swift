@@ -41,7 +41,7 @@ struct SizeAwareColorShader: ViewModifier {
 }
 
 struct TimeVaryingShader: ViewModifier {
-    
+    @StateObject private var userSettings = UserSettings.shared
     private let startDate = Date()
     
     func body(content: Content) -> some View {
@@ -51,7 +51,13 @@ struct TimeVaryingShader: ViewModifier {
                     .colorEffect(
                         ShaderLibrary.timeVaryingColor(
                             .float2(proxy.size),
-                            .float(startDate.timeIntervalSinceNow)
+                            .float(startDate.timeIntervalSinceNow),
+                            .float4(
+                                Float(userSettings.shaderBaseColor.cgColor?.components?[0] ?? 0),
+                                Float(userSettings.shaderBaseColor.cgColor?.components?[1] ?? 0),
+                                Float(userSettings.shaderBaseColor.cgColor?.components?[2] ?? 0),
+                                Float(userSettings.shaderBaseColor.cgColor?.components?[3] ?? 1)
+                            )
                         )
                     )
             }

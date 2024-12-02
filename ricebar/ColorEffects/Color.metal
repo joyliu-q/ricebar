@@ -32,14 +32,14 @@ half4 timeVaryingColor_old(float2 position, half4 color, float2 size, float time
 }
 
 [[ stitchable ]]
-half4 timeVaryingColor(float2 position, half4 color, float2 size, float time) {
+half4 timeVaryingColor(float2 position, half4 color, float2 size, float time, float4 baseColor) {
     half oscillation = oscillate(time + (2 * M_PI_F * position.x / size.x));
     
     return half4(
-        color.r * oscillation * 1.5,
-        color.g * oscillation * 2,
-        color.b * oscillation * 3,
-        color.a
+        baseColor.r * oscillation * 1.5,
+        baseColor.g * oscillation * 2,
+        baseColor.b * oscillation * 3,
+        baseColor.a
     );
 }
 
