@@ -49,6 +49,7 @@ struct MenuBarView: View {
                 .buttonStyle(PlainButtonStyle())
                 
                 
+                WeatherButton()
                 SystemInfoButton(iconName: nil, label: SystemInfoProvider.getCurrentTime())
                 SystemInfoButton(iconName: SystemInfoProvider.getCPUIcon(for: cpuUtilization), label: "\(cpuUtilization)%")
 
