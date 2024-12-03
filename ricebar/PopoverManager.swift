@@ -27,7 +27,7 @@ class PopoverManager {
         
         let popoverWidth = halfScreenWidth - notchWidth / 2
         
-        let window = NSWindow(
+        let window = NSPanel(
             contentRect: NSRect(x: xPosition,
                                 y: screenFrame.maxY - RICEBAR_HEIGHT,
                                 width: popoverWidth,
