@@ -26,7 +26,6 @@ struct Location: Decodable, Hashable, Encodable {
         
         let (data, _) = try await URLSession.shared.data(from: url)
         let response = try JSONDecoder().decode(WeatherResponse.self, from: data)
-        print(response)
         return response.getWeather()
     }
     

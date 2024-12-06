@@ -87,11 +87,10 @@ struct WeatherResponse: Decodable {
     
     func getWeather() -> Weather? {
         let currentTime = currentWeather.time.prefix(13)
-        guard let index = hourly.time.firstIndex(where: { $0.starts(with: currentTime) }) else {
+        guard hourly.time.firstIndex(where: { $0.starts(with: currentTime) }) != nil else {
             print("Current time not found in hourly data!")
             return nil
         }
-        print("Current hour time: \(currentTime), Hourly times: \(self.hourly.time)")
 
         if let index = hourly.time.firstIndex(where: { $0.starts(with: currentTime) }) {
 

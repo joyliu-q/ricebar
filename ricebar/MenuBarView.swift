@@ -8,12 +8,31 @@ import SwiftUI
 
 struct MenuBarView: View {
     let onDismiss: () -> Void
+    var pongWindowField: NSWindow? {
+        let pongWindowField = NSWindow(
+            contentRect: NSScreen.main?.frame ?? .zero,
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        pongWindowField.title = "Pong"
+        pongWindowField.level = .mainMenu
+        pongWindowField.backgroundColor = .clear
+        pongWindowField.isOpaque = false
+        pongWindowField.hasShadow = false
+        pongWindowField.contentView = NSHostingView(rootView: PongView())
+        
+        return pongWindowField
+    }
+    
     @State private var showPing = false
     @State private var batteryPercentage = SystemInfoProvider.getBatteryPercentage()
     @State private var cpuUtilization = SystemInfoProvider.getCPUUtilization()
     @State private var isCharging = SystemInfoProvider.isCharging()
     @State private var wifiDropdownExpanded = false
     @State private var wifiData = SystemInfoProvider.getWifiData()
+    @State private var showPong = false
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         VStack {
@@ -28,8 +47,11 @@ struct MenuBarView: View {
                                 .frame(width: 20, height: 20)
                                 .foregroundColor(.white)
                             
-                            if (isCharging) {
+                            if (isCharging) {   
                                 Image(systemName: "bolt.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 20, height: 20)
                                     .foregroundColor(.blue)
                                     .offset(x: -2)
                             }
@@ -57,55 +79,24 @@ struct MenuBarView: View {
                     SystemActions.openActivityMonitor()
                 }
                 
-                DropdownButton(iconName: "wifi", title: "Wi-Fi") {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Button(action: {
-                            let pasteboard = NSPasteboard.general
-                            pasteboard.clearContents()
-                            let success = pasteboard.setString(wifiData.ipv4, forType: .string)
-                            if !success {
-                                print("Failed to copy IPv4 address to the clipboard")
-                            }
-                        }) {
-                            HStack {
-                                Text("IPv4:")
-                                Spacer()
-                                Text(wifiData.ipv4)
-                            }
-                        }
-                        .buttonStyle(.borderless)
-                        .padding(.horizontal)
-                        .frame(maxWidth: .infinity)
-                        
-                        Divider()
-                        
-                        Button(action: {
-                            let pasteboard = NSPasteboard.general
-                            pasteboard.clearContents()
-                            let success = pasteboard.setString(wifiData.ipv6, forType: .string)
-                            if !success {
-                                print("Failed to copy IPv6 address to the clipboard")
-                            }
-                        }) {
-                            HStack {
-                                Text("IPv6:")
-                                Spacer()
-                                Text(wifiData.ipv6)
-                            }
-                        }
-                        .buttonStyle(.borderless)
-                        .padding(.horizontal)
-                        .frame(maxWidth: .infinity)
-                    }
-                }
-                
                 ReminderButton()
+                
+                WifiButton(wifiData: wifiData)
 
-               ActionButton(iconName: "sparkles") {
-                   showPing = true
-               }
-               .alert(isPresented: $showPing) {
-                   Alert(title: Text("Ping"), message: Text("Pong"), dismissButton: .default(Text("OK")))
+                ActionButton(iconName: "sparkles") {
+                    showPing = true
+                }
+                .alert(isPresented: $showPing) {
+                    Alert(title: Text("Ping"), message: Text("Pong"), dismissButton: .default(Text("OK")))
+                }
+
+               ActionButton(iconName: "gamecontroller") {
+                   showPong = true
+                   pongWindowField?.makeKeyAndOrderFront(nil)
+                   
+                   if let position = PopoverManager.shared.popoverWindow?.frame.midX {
+                       PongView.updatePaddlePosition(position)
+                   }
                }
 
                 SettingsButton()
@@ -121,11 +112,6 @@ struct MenuBarView: View {
             .background(DEFAULT_BACKGROUND.timeVaryingShader())
             .cornerRadius(16)
             .shadow(radius: 10)
-            .onAppear {
-                batteryPercentage = SystemInfoProvider.getBatteryPercentage()
-                cpuUtilization = SystemInfoProvider.getCPUUtilization()
-                isCharging = SystemInfoProvider.isCharging()
-            }
         }.padding(5)
         .background(.clear)
     }

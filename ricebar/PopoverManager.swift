@@ -14,8 +14,12 @@ var RICEBAR_HEIGHT = CGFloat(10)
 // TODO: IDK HOW TO SOLVE NOTCH WIDTH DETECTION
 class PopoverManager {
     static let shared = PopoverManager()
-    private var popoverWindow: NSWindow?
+    var popoverWindow: NSWindow?
     private var isAnimating = false
+    private var windowObserver: Any?
+    private let moveStep: CGFloat = 20.0 
+    private var keyboardMonitor: Any?
+    private var originalPosition: CGFloat?
     
     func showPopover() {
         guard !isAnimating else { return }
@@ -24,6 +28,7 @@ class PopoverManager {
         let notchWidth = CGFloat(210)
         let halfScreenWidth = screenFrame.width / 2
         let xPosition = screenFrame.midX + notchWidth / 2
+        originalPosition = xPosition
         
         let popoverWidth = halfScreenWidth - notchWidth / 2
         
@@ -48,6 +53,8 @@ class PopoverManager {
         })
         window.hasShadow = false
         
+        window.isMovableByWindowBackground = true
+        
         isAnimating = true
         if let contentView = window.contentView {
             contentView.wantsLayer = true
@@ -59,6 +66,17 @@ class PopoverManager {
 
         window.makeKeyAndOrderFront(nil)
         popoverWindow = window
+
+        windowObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didMoveNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            guard let windowPosition = self?.popoverWindow?.frame.midX else { return }
+            PongView.updatePaddlePosition(windowPosition)
+        }
+
+        setupKeyboardMonitor()
     }
 
     func hidePopover() {
@@ -71,6 +89,13 @@ class PopoverManager {
             self.popoverWindow = nil
             self.isAnimating = false
         }
+
+        if let observer = windowObserver {
+            NotificationCenter.default.removeObserver(observer)
+            windowObserver = nil
+        }
+
+        removeKeyboardMonitor()
     }
     
     private func applyRollingAnimation(to view: NSView, isShowing: Bool, completion: (() -> Void)? = nil) {
@@ -89,4 +114,51 @@ class PopoverManager {
             view.layer?.add(animation, forKey: "rollAnimation")
             CATransaction.commit()
         }
+
+    func moveWindow(direction: CGFloat) {
+        guard let window = popoverWindow,
+              let screen = NSScreen.main else { return }
+        
+        let isPongOpen = NSApp.windows.contains(where: { $0.title == "Pong" })
+        if !isPongOpen, let originalPosition = originalPosition {
+            var frame = window.frame
+            frame.origin.x = originalPosition
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.3
+                window.animator().setFrame(frame, display: true)
+            }
+            return
+        }
+        
+        var frame = window.frame
+        frame.origin.x += direction * moveStep
+        
+        frame.origin.x = max(0, min(frame.origin.x, screen.frame.width - frame.width))
+        
+        window.setFrame(frame, display: true)
+        
+        PongView.updatePaddlePosition(frame.midX)
+    }
+
+    private func setupKeyboardMonitor() {
+        keyboardMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            switch event.keyCode {
+            case 123:
+                self?.moveWindow(direction: -1)
+                return nil
+            case 124:
+                self?.moveWindow(direction: 1)
+                return nil
+            default:
+                return event
+            }
+        }
+    }
+    
+    private func removeKeyboardMonitor() {
+        if let monitor = keyboardMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyboardMonitor = nil
+        }
+    }
 }

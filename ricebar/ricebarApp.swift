@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+
 @main
 struct RicebarApp: App {
     @State private var showRicebar = false
