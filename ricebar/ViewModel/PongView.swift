@@ -89,10 +89,11 @@ struct PongView: View {
                             
                             Button("Quit") {
                                 game.endGame()
-                                 if let window = NSApp.windows.first(where: { $0.title == "Pong" }) {
-                                     window.isReleasedWhenClosed = false
-                                     window.close()
-                                 }
+                                if let window = NSApp.windows.first(where: { $0.title == "Pong" }) {
+                                    window.isReleasedWhenClosed = false
+                                    window.close()
+                                }
+                                PopoverManager.shared.resetPosition()
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(.red)

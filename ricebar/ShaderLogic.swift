@@ -42,25 +42,30 @@ struct SizeAwareColorShader: ViewModifier {
 
 struct TimeVaryingShader: ViewModifier {
     @StateObject private var userSettings = UserSettings.shared
-    private let startDate = Date()
+    
+    @State private var currentTime: Double = 0
     
     func body(content: Content) -> some View {
-        TimelineView(.animation) { _ in
-            content.visualEffect { content, proxy in
-                content
-                    .colorEffect(
-                        ShaderLibrary.timeVaryingColor(
-                            .float2(proxy.size),
-                            .float(startDate.timeIntervalSinceNow),
-                            .float4(
-                                Float(userSettings.shaderBaseColor.cgColor?.components?[0] ?? 0),
-                                Float(userSettings.shaderBaseColor.cgColor?.components?[1] ?? 0),
-                                Float(userSettings.shaderBaseColor.cgColor?.components?[2] ?? 0),
-                                Float(userSettings.shaderBaseColor.cgColor?.components?[3] ?? 1)
-                            )
+        content.visualEffect { content, proxy in
+            content
+                .colorEffect(
+                    ShaderLibrary.timeVaryingColor(
+                        .float2(proxy.size),
+                        .float(currentTime),
+                        .float4(
+                            Float(userSettings.shaderBaseColor.cgColor?.components?[0] ?? 0),
+                            Float(userSettings.shaderBaseColor.cgColor?.components?[1] ?? 0),
+                            Float(userSettings.shaderBaseColor.cgColor?.components?[2] ?? 0),
+                            Float(userSettings.shaderBaseColor.cgColor?.components?[3] ?? 1)
                         )
                     )
+                )
+        }
+        .onAppear {
+            let timer = Timer.scheduledTimer(withTimeInterval: 1/30, repeats: true) { _ in
+                currentTime += 1/30
             }
+            RunLoop.current.add(timer, forMode: .common)
         }
     }
 }

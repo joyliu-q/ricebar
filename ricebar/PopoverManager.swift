@@ -17,7 +17,7 @@ class PopoverManager {
     var popoverWindow: NSWindow?
     private var isAnimating = false
     private var windowObserver: Any?
-    private let moveStep: CGFloat = 20.0 
+    private let moveStep: CGFloat = 30.0 
     private var keyboardMonitor: Any?
     private var originalPosition: CGFloat?
     
@@ -46,7 +46,7 @@ class PopoverManager {
         window.title = RICEBAR_TITLE
         window.level = .mainMenu + 1
         window.isOpaque = false
-        window.backgroundColor = .clear
+        window.backgroundColor = NSColor(deviceRed: 0, green: 0, blue: 0, alpha: 0)
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         window.contentView = NSHostingView(rootView: MenuBarView {
             self.hidePopover()
@@ -132,10 +132,13 @@ class PopoverManager {
         
         var frame = window.frame
         frame.origin.x += direction * moveStep
-        
         frame.origin.x = max(0, min(frame.origin.x, screen.frame.width - frame.width))
         
-        window.setFrame(frame, display: true)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.1
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            window.animator().setFrame(frame, display: true)
+        }
         
         PongView.updatePaddlePosition(frame.midX)
     }
@@ -161,4 +164,18 @@ class PopoverManager {
             keyboardMonitor = nil
         }
     }
+
+    func resetPosition() {
+        guard let window = popoverWindow,
+              let originalPosition = originalPosition else { return }
+        
+        var frame = window.frame
+        frame.origin.x = originalPosition
+        
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.3
+            window.animator().setFrame(frame, display: true)
+        }
+    }
 }
+

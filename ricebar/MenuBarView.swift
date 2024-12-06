@@ -47,7 +47,7 @@ struct MenuBarView: View {
                                 .frame(width: 20, height: 20)
                                 .foregroundColor(.white)
                             
-                            if (isCharging) {   
+                            if (isCharging) {
                                 Image(systemName: "bolt.fill")
                                     .resizable()
                                     .scaledToFit()
@@ -111,9 +111,10 @@ struct MenuBarView: View {
             .frame(maxWidth: .infinity)
             .background(DEFAULT_BACKGROUND.timeVaryingShader())
             .cornerRadius(16)
-            .shadow(radius: 10)
-        }.padding(5)
+        }
+        .padding(5)
         .background(.clear)
+        .edgesIgnoringSafeArea(.all)
     }
 }
 
