@@ -2,6 +2,8 @@
 
 RICE'd MacOS menubar.
 
+![Ricebar](./so_ricebar.mov)
+
 Ricebar is a customizable menu bar with consisting of a plethora of cosmetic and functional features, meant to replace the traditional MacOS menu bar.
 
 ## Motivation
@@ -30,6 +32,7 @@ In my V1, I made it replace the entire menu bar, but quickly realized that it me
 
 ## WIP Features & Bugs
 - More efficient ricebar (CPU / memory usage)
+  - Phase 1 optimization done; 6~10% CPU utilization. More is always better but to achieve that we may need to disable GPU shaders by default and have them be user enabled.
 - Notchless menu bar (better width / height calculations)
 - Pong
   - Smoother animation and bouncier ball physics (not just basic, but boing)
