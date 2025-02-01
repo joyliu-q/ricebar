@@ -8,6 +8,11 @@ class PongGame: ObservableObject {
     @Published var score: Int = 0
     @Published var isGameOver: Bool = false
     
+    private let maxSpeed: CGFloat = 25.0
+    private let minSpeed: CGFloat = 5.0
+    private let speedIncrease: CGFloat = 1.05
+    private let maxBounceAngle: CGFloat = .pi / 3 // 60 degrees
+    
     var timer: Timer?
     var paddlePosition: CGFloat = 0
     
@@ -16,8 +21,18 @@ class PongGame: ObservableObject {
         score = 0
         ballPosition = CGPoint(x: 400, y: 300)
         ballVelocity = CGPoint(x: 5, y: -5)
+        PopoverManager.shared.move(percentage: 0.5)
+        PopoverManager.shared.setupKeyboardMonitor()
         
-        timer = Timer.scheduledTimer(withTimeInterval: 1/60, repeats: true) { [weak self] _ in
+        // Initialize with random angle between -45 and 45 degrees
+        let angle = CGFloat.random(in: -(.pi/4)...(.pi/4))
+        let speed = minSpeed
+        ballVelocity = CGPoint(
+            x: speed * cos(angle),
+            y: -speed * sin(angle)
+        )
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 1/200, repeats: true) { [weak self] _ in
             self?.updateBall()
         }
     }
@@ -53,6 +68,7 @@ class PongGame: ObservableObject {
         timer?.invalidate()
         timer = nil
         isGameOver = true
+        PopoverManager.shared.removeKeyboardMonitor()
     }
     
     func updatePaddlePosition(_ position: CGFloat) {

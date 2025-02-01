@@ -10,37 +10,29 @@ import SwiftUI
 
 @main
 struct RicebarApp: App {
-    @State private var showRicebar = false
 
     var body: some Scene {
         MenuBarExtra {
             Button(action: {
-                showRicebar.toggle()
+                PopoverManager.shared.toggle()
             }) {
-                Text(showRicebar ? "Hide Ricebar" : "Show Ricebar")
+                Text(PopoverManager.shared.isVisible ? "Hide Ricebar" : "Show Ricebar")
             }
         } label: {
             Image(systemName: "leaf.fill")
         }
-        .menuBarExtraStyle(.window) // Optional: Choose the style of the menu bar extra
+        .menuBarExtraStyle(.window)
 
         .commands {
             CommandMenu("Ricebar") {
                 Button(action: {
-                    showRicebar.toggle()
+                    PopoverManager.shared.toggle()
                 }) {
-                    Text(showRicebar ? "Hide Ricebar" : "Show Ricebar")
+                    Text(PopoverManager.shared.isVisible ? "Hide Ricebar" : "Show Ricebar")
                 }
                 .keyboardShortcut("P", modifiers: [.command, .shift])
             }
         }
-        .onChange(of: showRicebar, {
-            if showRicebar {
-                PopoverManager.shared.showPopover()
-            } else {
-                PopoverManager.shared.hidePopover()
-            }
-        })
     }
 }
 
