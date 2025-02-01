@@ -2,9 +2,11 @@
 
 RICE'd MacOS menubar.
 
-<video src="so_ricebar.mov" controls title="Ricebar Demo"></video>
-
 Ricebar is a customizable menu bar with consisting of a plethora of cosmetic and functional features, meant to replace the traditional MacOS menu bar.
+
+![Ricebar Demo](demos/demo_pong.gif)
+
+<video src="demos/so_ricebar.mov" controls title="Ricebar Demo">Ricebar Demo</video>
 
 ## Motivation
 __*Riced Menu Bar*__: RICE, or Race Inspired Cosmetic Enhancements (R.I.C.E.), is the act of making unnecessary cosmetic changes to your set-up (e.g. laptop) to make it seem cool. I want to make a menu bar that looks very fancy and different from the default Mac menu bar, with some additional functionalities mirroring the activities monitor widget. This is “helpful” because it is cool looking.
