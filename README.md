@@ -2,7 +2,7 @@
 
 RICE'd MacOS menubar.
 
-![Ricebar](./so_ricebar.mov)
+<video src="so_ricebar.mov" controls title="Ricebar Demo"></video>
 
 Ricebar is a customizable menu bar with consisting of a plethora of cosmetic and functional features, meant to replace the traditional MacOS menu bar.
 
